@@ -47,7 +47,7 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
       return
     }
     return getMessageListener(room, setMessages)
-  }, [])
+  }, [room?.id])
 
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault()
