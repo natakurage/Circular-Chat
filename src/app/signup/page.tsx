@@ -1,13 +1,8 @@
 "use client"
 
 import { FormEvent, useState } from "react"
-import {
-  createUserWithEmailAndPassword,
-  getAuth,
-  sendEmailVerification,
-} from 'firebase/auth'
 import { FirebaseError } from '@firebase/util'
-import { initializeFirebaseApp } from "@/lib/firebase/firebase"
+import { signup } from "@/lib/firebase/interface"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
@@ -19,34 +14,21 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (password !== password2) {
-      setAlertMessage("Different password")
-      setShowAlert(true)
-      return
-    }
-    initializeFirebaseApp()
-    try {
-      const auth = getAuth()
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      )
-      await sendEmailVerification(userCredential.user)
-      setEmail('')
-      setPassword('')
-      setPassword2('')
-      setAlertMessage(`Verification Email has sent to ${email}.`)
-      setAlertClass("alert-success")
-      setShowAlert(true)
-    } catch (e) {
-      if (e instanceof FirebaseError) {
-        console.log(e)
+    signup(email, password, password2,
+      () => {
+        setEmail('')
+        setPassword('')
+        setPassword2('')
+        setAlertMessage(`Verification Email has sent to ${email}.`)
+        setAlertClass("alert-success")
+        setShowAlert(true)
+      },
+      (e: FirebaseError) => {
         setAlertClass("alert-error")
         setAlertMessage(e.message)
         setShowAlert(true)
       }
-    }
+    )
   }
 
   return (

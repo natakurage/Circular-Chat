@@ -1,4 +1,4 @@
-import { User } from "firebase/auth"
+import { createUserWithEmailAndPassword, getAuth, sendEmailVerification, signInWithEmailAndPassword, User } from "firebase/auth"
 import {
   getFirestore,
   collection,
@@ -12,6 +12,7 @@ import {
 import { getDatabase, push, ref, onChildAdded } from '@firebase/database'
 import { FirebaseError } from "firebase/app"
 import { Dispatch, SetStateAction } from "react"
+import { initializeFirebaseApp } from "./firebase"
 
 export interface ChatMessage {
   id: string
@@ -122,5 +123,88 @@ export const getMessageListener = (room: Room, setMessages: Dispatch<SetStateAct
       console.error(e)
     }
     return
+  }
+}
+
+export const login = async (
+  email: string,
+  password: string,
+  onSuccess?: Function,
+  onFail?: Function
+) => {
+  initializeFirebaseApp()
+  try {
+    const auth = getAuth()
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    )
+    onSuccess?.()
+  } catch (e) {
+    if (e instanceof FirebaseError) {
+      console.log(e)
+    }
+    onFail?.(e)
+  }
+}
+
+export const signup = async (
+  email: string,
+  password: string,
+  password2: string,
+  onInvalid?: Function,
+  onSuccess?: Function,
+  onFail?: Function
+) => {
+  if (password !== password2) {
+    onInvalid?.()
+    return
+  }
+  initializeFirebaseApp()
+  try {
+    const auth = getAuth()
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    )
+    await sendEmailVerification(userCredential.user)
+    onSuccess?.()
+  } catch (e) {
+    if (e instanceof FirebaseError) {
+      console.log(e)
+    }
+    onFail?.()
+  }
+}
+
+export const updateUserInfo = async (
+  email: string,
+  password: string,
+  password2: string,
+  onInvalid?: Function,
+  onSuccess?: Function,
+  onFail?: Function
+) => {
+  if (password !== password2) {
+    onInvalid?.()
+    return
+  }
+  initializeFirebaseApp()
+  try {
+    const auth = getAuth()
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    )
+    await sendEmailVerification(userCredential.user)
+    onSuccess?.()
+  } catch (e) {
+    if (e instanceof FirebaseError) {
+      console.log(e)
+    }
+    onFail?.()
   }
 }

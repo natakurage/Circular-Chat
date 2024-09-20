@@ -1,13 +1,9 @@
 "use client"
 
 import { FormEvent, useState } from "react"
-import {
-  signInWithEmailAndPassword,
-  getAuth,
-} from 'firebase/auth'
 import { FirebaseError } from '@firebase/util'
-import { initializeFirebaseApp } from "@/lib/firebase/firebase"
 import { useRouter } from "next/navigation"
+import { login } from "@/lib/firebase/interface"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -19,24 +15,14 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    initializeFirebaseApp()
-    try {
-      const auth = getAuth()
-      
-      await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      )
-      router.push("/")
-    } catch (e) {
-      if (e instanceof FirebaseError) {
-        console.log(e)
+    login(email, password,
+      () => router.push("/"),
+      (e: FirebaseError) => {
         setAlertClass("alert-error")
         setAlertMessage(e.message)
         setShowAlert(true)
       }
-    }
+    )
   }
 
   return (

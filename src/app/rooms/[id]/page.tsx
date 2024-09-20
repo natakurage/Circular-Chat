@@ -5,7 +5,6 @@ import { FormEvent, useEffect, useState } from "react";
 
 import { initializeFirebaseApp } from "@/lib/firebase/firebase";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
-import { getDatabase, push, ref, onChildAdded } from '@firebase/database'
 import { FirebaseError } from '@firebase/util'
 import RoomList from "@/components/RoomList";
 import { AvatarCircle } from "@/components/Avatars";
@@ -82,7 +81,7 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
         </ul>
         <div className="w-full max-w-xl m-auto">
           {
-            room && <AvatarCircle users={room.users} messages={messages} />
+            room && <AvatarCircle room={room} messages={messages} />
           }
         </div>
         <div className="w-full space-y-4 p-6 m-auto bg-white rounded-md shadow-md ring-2 ring-gray-800/50 lg:max-w-lg">

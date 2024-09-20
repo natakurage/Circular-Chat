@@ -1,7 +1,7 @@
-import { ChatMessage } from "@/lib/firebase/interface"
+import { ChatMessage, Room } from "@/lib/firebase/interface"
 import { User } from "firebase/auth"
 
-export function AvatarCircle({ users, messages }: { users: User[], messages: ChatMessage[] }) {
+export function AvatarCircle({ room, messages }: { room: Room, messages: ChatMessage[] }) {
   const scale = 0.8
   return (
     <div
@@ -12,9 +12,9 @@ export function AvatarCircle({ users, messages }: { users: User[], messages: Cha
         style={{ transform: "translate(50%, 60%)" }}
       >
       {
-        users.map((user, idx) => {
-          const x = scale * Math.cos(2 * Math.PI * idx / users.length)
-          const y = scale * Math.sin(2 * Math.PI * idx / users.length)
+        room.users.map((user, idx) => {
+          const x = scale * Math.cos(2 * Math.PI * idx / room.users.length)
+          const y = scale * Math.sin(2 * Math.PI * idx / room.users.length)
           return (
             <div
               key={user.uid}

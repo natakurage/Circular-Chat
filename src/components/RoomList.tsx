@@ -13,10 +13,6 @@ export default function RoomList({ currentUser }: { currentUser: User | null }) 
     setRooms(await getCurrentUserRooms(currentUser))
   }
 
-  useEffect(() => {
-    fetchRooms()
-  }, [currentUser?.uid])
-
   const handleCreateRoom = async (e: FormEvent) => {
     e.preventDefault()
     if (currentUser == null) {
@@ -29,6 +25,10 @@ export default function RoomList({ currentUser }: { currentUser: User | null }) 
       }
     )
   }
+
+  useEffect(() => {
+    fetchRooms()
+  }, [currentUser?.uid])
 
   return (
     <ul className="menu bg-base-200 rounded-box w-56 h-full">
