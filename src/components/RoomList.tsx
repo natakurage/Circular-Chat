@@ -61,7 +61,7 @@ export default function RoomList({ currentUser }: { currentUser: User | null }) 
   }
 
   return (
-    <ul className="menu bg-base-200 rounded-box w-56">
+    <ul className="menu bg-base-200 rounded-box w-56 h-full">
       <li className="menu-title">Chat Rooms</li>
       {
         rooms.map((room) => (

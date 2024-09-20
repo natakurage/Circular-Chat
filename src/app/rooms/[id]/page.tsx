@@ -18,6 +18,7 @@ import {
 } from '@firebase/firestore'
 import { FirebaseError } from '@firebase/util'
 import RoomList from "@/components/RoomList";
+import { AvatarCircle } from "@/components/Avatars";
 
 interface ChatMessage {
   id: string
@@ -115,8 +116,10 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
 
   return (
     <div className="flex flex-row">
-      <RoomList currentUser={currentUser}/>
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
+      <div className="">
+        <RoomList currentUser={currentUser}/>
+      </div>
+      <main className="flex-1 flex flex-col gap-8 row-start-2 items-center sm:items-start">
         { currentUser?.email }
         <ul>
         {
@@ -127,6 +130,9 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
           ))
         }
         </ul>
+        <div className="w-full max-w-xl m-auto">
+          <AvatarCircle />
+        </div>
         <div className="w-full space-y-4 p-6 m-auto bg-white rounded-md shadow-md ring-2 ring-gray-800/50 lg:max-w-lg">
           <h1 className="text-3xl font-semibold text-center text-gray-700">Send message</h1>
           <form
