@@ -1,39 +1,16 @@
 import { FormEvent, useEffect, useState } from "react";
 import { User } from "firebase/auth";
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc
-} from '@firebase/firestore'
-import { FirebaseError } from '@firebase/util'
-
-interface Room {
-  id: string
-  name: string
-}
+import { createRoom, getCurrentUserRooms, Room } from "@/lib/firebase/interface";
 
 export default function RoomList({ currentUser }: { currentUser: User | null }) {
   const [rooms, setRooms] = useState<Room[]>([])
   const [roomName, setRoomName] = useState("")
 
   const fetchRooms = async () => {
-    if (currentUser?.uid == null) {
+    if (currentUser == null) {
       return
     }
-    const db = getFirestore()
-    const q = query(collection(db, "rooms"), where("users", "array-contains", currentUser?.uid))
-
-    const ss = await getDocs(q)
-    const rooms: Room[] = []
-    ss.forEach((doc) => {
-      const data = doc.data()
-      const room: Room = { id: doc.id, name: data.name }
-      rooms.push(room)
-    })
-    setRooms(rooms)
+    setRooms(await getCurrentUserRooms(currentUser))
   }
 
   useEffect(() => {
@@ -42,22 +19,15 @@ export default function RoomList({ currentUser }: { currentUser: User | null }) 
 
   const handleCreateRoom = async (e: FormEvent) => {
     e.preventDefault()
-    try {
-      const db = getFirestore()
-      addDoc(collection(db, "rooms"), {
-        name: roomName,
-        users: [currentUser?.uid]
-      })
-      setRoomName("")
-      // setAlertClass("alert-success")
-      // setAlertMessage("Message sent")
-      // setShowAlert(true)
-    } catch (e) {
-      if (e instanceof FirebaseError) {
-        console.log(e)
-      }
+    if (currentUser == null) {
+      return
     }
-    fetchRooms()
+    await createRoom(roomName, currentUser,
+      () => {
+        setRoomName("")
+        fetchRooms()
+      }
+    )
   }
 
   return (

@@ -5,31 +5,16 @@ import { FormEvent, useEffect, useState } from "react";
 
 import { initializeFirebaseApp } from "@/lib/firebase/firebase";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
-import { getDatabase, push, ref, onChildAdded, get } from '@firebase/database'
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  getDoc,
-  doc
-} from '@firebase/firestore'
+import { getDatabase, push, ref, onChildAdded } from '@firebase/database'
 import { FirebaseError } from '@firebase/util'
 import RoomList from "@/components/RoomList";
 import { AvatarCircle } from "@/components/Avatars";
-
-interface ChatMessage {
-  id: string
-  message: string,
-  sender: string
-}
+import { ChatMessage, getMessageListener, getRoom, Room, sendMessage } from "@/lib/firebase/interface";
 
 export default function ChatRoom({ params }: { params: { id: string } }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [chats, setChats] = useState<ChatMessage[]>([])
-  const [roomName, setRoomName] = useState("")
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [room, setRoom] = useState<Room | null>(null)
   const [chatMessage, setChatMessage] = useState("")
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState("")
@@ -48,70 +33,35 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
   })
 
   useEffect(() => {
-    const checkRoomExists = async () => {
-      try {
-        const db = getFirestore()
-        const document = await getDoc(doc(db, `rooms/${params.id}`))
-        // where("users", "array-contains", currentUser?.uid)
-        // 存在確認
-        if (!document.exists()) {
-          router.push("/404")
-        }
-      } catch (e) {
-        if (e instanceof FirebaseError) {
-          console.error(e)
-        }
-        return
+    (async () => {
+      const room = await getRoom(params.id)
+      if (room == null) {
+        router.push("/404")
       }
-    }
-    checkRoomExists()
+      setRoom(room)
+    })()
   }, [params.id, router])
 
   useEffect(() => {
-    try {
-      const db = getDatabase()
-      const dbRef = ref(db, `rooms/${params.id}/chat`)
-
-      return onChildAdded(dbRef, (snapshot) => {
-        const value = snapshot.val()
-        setChats((prev) => [
-          ...prev,
-          {
-            id: snapshot.key ?? "",
-            message: value.message,
-            sender: value.sender,
-          },
-        ])
-      })
-    } catch (e) {
-      if (e instanceof FirebaseError) {
-        console.error(e)
-      }
+    if (room == null) {
       return
     }
-  }, [params.id, router])
+    return getMessageListener(room, setMessages)
+  }, [])
 
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault()
-    try {
-      const db = getDatabase()
-      const dbRef = ref(db, `rooms/${params.id}/chat`)
-      await push(dbRef, {
-        message: chatMessage,
-        sender: currentUser?.uid
-      })
-      setChatMessage("")
-      // setAlertClass("alert-success")
-      // setAlertMessage("Message sent")
-      // setShowAlert(true)
-    } catch (e) {
-      if (e instanceof FirebaseError) {
-        console.log(e)
-        setAlertClass("alert-error")
-        setAlertMessage(e.message)
-        setShowAlert(true)
-      }
+    if (room == null || currentUser == null) {
+      return
     }
+    sendMessage(room, chatMessage, currentUser,
+      () => setChatMessage(""),
+      (e: FirebaseError) => {
+        setShowAlert(true)
+        setAlertMessage(e.message)
+        setAlertClass("alert-error")
+      }
+    )
   }
 
   return (
@@ -123,7 +73,7 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
         { currentUser?.email }
         <ul>
         {
-          chats.map((chat) => (
+          messages.map((chat) => (
             <li key={chat.id}>
               {chat.sender}: {chat.message}
             </li>
@@ -131,7 +81,9 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
         }
         </ul>
         <div className="w-full max-w-xl m-auto">
-          <AvatarCircle />
+          {
+            room && <AvatarCircle users={room.users} messages={messages} />
+          }
         </div>
         <div className="w-full space-y-4 p-6 m-auto bg-white rounded-md shadow-md ring-2 ring-gray-800/50 lg:max-w-lg">
           <h1 className="text-3xl font-semibold text-center text-gray-700">Send message</h1>

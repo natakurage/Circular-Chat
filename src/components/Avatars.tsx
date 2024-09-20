@@ -1,6 +1,8 @@
-export function AvatarCircle() {
+import { ChatMessage } from "@/lib/firebase/interface"
+import { User } from "firebase/auth"
+
+export function AvatarCircle({ users, messages }: { users: User[], messages: ChatMessage[] }) {
   const scale = 0.8
-  const users = [1, 2, 3, 4, 5, 6]
   return (
     <div
       className="relative border w-full aspect-square"
@@ -15,11 +17,11 @@ export function AvatarCircle() {
           const y = scale * Math.sin(2 * Math.PI * idx / users.length)
           return (
             <div
-              key={user}
+              key={user.uid}
               className={`border rounded-full absolute`}
               style={{ top: `${50 * y}%`, left: `${50 * x}%`, transform: "translate(-50%, -50%)" }}
             >
-              { user }
+              { user.uid }: { user.displayName }
             </div>
           )
         })
