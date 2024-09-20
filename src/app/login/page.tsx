@@ -12,9 +12,9 @@ import { useRouter } from "next/navigation"
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [showMessage, setShowMessage] = useState(false)
-  const [message, setMessage] = useState("")
-  const [messageClass, setMessageClass] = useState("alert-error")
+  const [showAlert, setShowAlert] = useState(false)
+  const [alertMessage, setAlertMessage] = useState("")
+  const [alertClass, setAlertClass] = useState("alert-error")
   const router = useRouter()
 
   const handleSubmit = async (e: FormEvent) => {
@@ -32,9 +32,9 @@ export default function LoginPage() {
     } catch (e) {
       if (e instanceof FirebaseError) {
         console.log(e)
-        setMessageClass("alert-error")
-        setMessage(e.message)
-        setShowMessage(true)
+        setAlertClass("alert-error")
+        setAlertMessage(e.message)
+        setShowAlert(true)
       }
     }
   }
@@ -79,10 +79,10 @@ export default function LoginPage() {
         </div>
       </form>
       {
-        showMessage &&
+        showAlert &&
         <div
           role="alert"
-          className={`alert ${messageClass}`}
+          className={`alert ${alertClass}`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -95,7 +95,7 @@ export default function LoginPage() {
               strokeWidth="2"
               d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>{ message }</span>
+          <span>{ alertMessage }</span>
         </div>
       }
     </div>
