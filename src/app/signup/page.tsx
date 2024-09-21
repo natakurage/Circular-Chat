@@ -16,6 +16,13 @@ export default function SignUpPage() {
     e.preventDefault()
     signup(email, password, password2,
       () => {
+        setPassword('')
+        setPassword2('')
+        setAlertMessage("Passwords does not match.")
+        setAlertClass("alert-success")
+        setShowAlert(true)
+      },
+      () => {
         setEmail('')
         setPassword('')
         setPassword2('')
@@ -23,10 +30,14 @@ export default function SignUpPage() {
         setAlertClass("alert-success")
         setShowAlert(true)
       },
-      (e: FirebaseError) => {
-        setAlertClass("alert-error")
-        setAlertMessage(e.message)
+      (e: unknown) => {
+        setPassword('')
+        setPassword2('')
         setShowAlert(true)
+        if (e instanceof FirebaseError) {
+          setAlertMessage(e.message)
+        }
+        setAlertClass("alert-error")
       }
     )
   }

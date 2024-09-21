@@ -17,10 +17,12 @@ export default function LoginPage() {
     e.preventDefault()
     login(email, password,
       () => router.push("/"),
-      (e: FirebaseError) => {
-        setAlertClass("alert-error")
-        setAlertMessage(e.message)
+      (e: unknown) => {
         setShowAlert(true)
+        if (e instanceof FirebaseError) {
+          setAlertMessage(e.message)
+        }
+        setAlertClass("alert-error")
       }
     )
   }
