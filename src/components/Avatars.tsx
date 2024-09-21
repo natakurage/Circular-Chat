@@ -1,8 +1,53 @@
-import { ChatMessage, Room } from "@/lib/firebase/interface"
+import { ChatMessage, Room, UserData } from "@/lib/firebase/interface"
+import { useEffect, useState } from "react"
 
-export function AvatarCircle({ room, messages }: { room: Room, messages: ChatMessage[] }) {
+function Message({ messages, limit = 5, overlapX = 0, overlapY = 30 } : { messages: ChatMessage[], limit?: number, overlapX?: number, overlapY?: number }) {
+  const numMessages = Math.min(messages.length, limit)
+  const [foregroundIdx, setForegroundIdx] = useState(numMessages - 1)
+
+  useEffect(() => {
+    setForegroundIdx(numMessages - 1)
+  }, [numMessages])
+
+  return (
+    <ul>
+    {
+      messages.map((message, idx) => {
+        const index = idx - (messages.length - numMessages)
+        if (index < 0) {
+          return
+        }
+        return (
+          <li
+            key={index}
+            className={
+              "border rounded "
+              + "text-sm "
+              + "transition-[top,opacity] "
+              + "absolute shadow-lg p-2 w-64 min-h-48 "
+              + "bg-white text-gray-700 "
+            }
+            style={{
+              top: `${-overlapY * index + (index > foregroundIdx ? -20 : 0)}%`,
+              left: `${-overlapX * index + 50}%`,
+              transform: "translate(-50%, -100%)",
+              zIndex: index == foregroundIdx ? 9999: index,
+              opacity: index == foregroundIdx ? 1 : 0.1 + index / (numMessages + 50)
+            }}
+              onMouseEnter={() => setForegroundIdx(index)}
+              onMouseLeave={() => setForegroundIdx(numMessages - 1)}
+          >
+            {message.message}
+          </li>
+        )
+      })
+    }
+    </ul>
+  )
+}
+
+export function AvatarCircle({ room, messages, currentUser }: { room: Room, messages: ChatMessage[], currentUser: UserData | null }) {
   const scale = 0.8
-  const limit = 2
 
   const messageMap = new Map<string, ChatMessage[]>()
   for (const message of messages) {
@@ -29,28 +74,22 @@ export function AvatarCircle({ room, messages }: { room: Room, messages: ChatMes
       >
       {
         room.users.map((user, idx) => {
-          const x = scale * Math.cos(2 * Math.PI * idx / room.users.length)
-          const y = scale * Math.sin(2 * Math.PI * idx / room.users.length)
+          const t = idx / (room.users.length - 1)
+          const u = room.users.length > 2 ? (0.7 * t + 0.4) : (0.5 * t + 0.5)
+          const theta = 2 * Math.PI * u
+          const x = scale * Math.cos(theta)
+          const y = -scale * Math.sin(theta)
           return (
             <div
               key={user.id}
-              className={`border rounded-full absolute p-5`}
+              className={
+                "border rounded-full absolute p-5 text-gray-700 "
+                + (currentUser?.id == user.id ? "bg-green-500 " : "bg-white ")
+              }
               style={{ top: `${50 * y}%`, left: `${50 * x}%`, transform: "translate(-50%, -50%)" }}
             >
               { user.displayName }
-              <ul>
-              {
-                messageMap.get(user.id)?.map((message, idx2) => idx2 > limit && (
-                  <li
-                    key={ message.id }
-                    className="border bg-white text-gray-700 rounded absolute p-2 min-w-24"
-                    style={{ top: `${-50 * (idx2 - limit)}%`, left: "50%", transform: "translate(-50%, -50%)" }}
-                  >
-                    {message.message}
-                  </li>
-                ))
-              }
-              </ul>
+              <Message messages={messageMap.get(user.id) ?? []} />
             </div>
           )
         })

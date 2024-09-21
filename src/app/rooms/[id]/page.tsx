@@ -62,9 +62,10 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
         <RoomList currentUser={currentUserData}/>
       </div>
       <main className="flex-1 flex flex-col gap-8 row-start-2 items-center sm:items-start">
+        <h1 className="text-7xl w-full my-3 text-center">Room {room?.name}</h1>
         <div className="w-full max-w-xl m-auto">
           {
-            room && <AvatarCircle room={room} messages={messages} />
+            room && <AvatarCircle room={room} messages={messages} currentUser={currentUserData} />
           }
         </div>
         <div className="w-full space-y-4 p-6 m-auto bg-white rounded-md shadow-md ring-2 ring-gray-800/50 lg:max-w-lg">
