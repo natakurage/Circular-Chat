@@ -3,15 +3,13 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
-import { initializeFirebaseApp } from "@/lib/firebase/firebase";
-import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { FirebaseError } from '@firebase/util'
 import RoomList from "@/components/RoomList";
 import { AvatarCircle } from "@/components/Avatars";
-import { ChatMessage, getMessageListener, getRoom, Room, sendMessage } from "@/lib/firebase/interface";
+import { ChatMessage, getCurrentUser, getMessageListener, getRoom, Room, sendMessage, UserData } from "@/lib/firebase/interface";
 
 export default function ChatRoom({ params }: { params: { id: string } }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [currentUserData, setCurrentUserData] = useState<UserData | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [room, setRoom] = useState<Room | null>(null)
   const [chatMessage, setChatMessage] = useState("")
@@ -21,15 +19,8 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
 
   const router = useRouter()
   useEffect(() => {
-    initializeFirebaseApp()
-    return onAuthStateChanged(getAuth(), (user: User | null) => {
-      setCurrentUser(user)
-      // console.log(user)
-      if (user === null) {
-        router.push("/login")
-      }
-    })
-  })
+    getCurrentUser(() => {}, setCurrentUserData, () => { router.push("/") })
+  }, [router])
 
   useEffect(() => {
     (async () => {
@@ -46,18 +37,20 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
       return
     }
     return getMessageListener(room, setMessages)
-  }, [room?.id])
+  }, [room])
 
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault()
-    if (room == null || currentUser == null) {
+    if (room == null || currentUserData == null) {
       return
     }
-    sendMessage(room, chatMessage, currentUser,
+    sendMessage(room, chatMessage, currentUserData,
       () => setChatMessage(""),
-      (e: FirebaseError) => {
+      (e: unknown) => {
         setShowAlert(true)
-        setAlertMessage(e.message)
+        if (e instanceof FirebaseError) {
+          setAlertMessage(e.message)
+        }
         setAlertClass("alert-error")
       }
     )
@@ -66,19 +59,9 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
   return (
     <div className="flex flex-row">
       <div className="">
-        <RoomList currentUser={currentUser}/>
+        <RoomList currentUser={currentUserData}/>
       </div>
       <main className="flex-1 flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        { currentUser?.email }
-        <ul>
-        {
-          messages.map((chat) => (
-            <li key={chat.id}>
-              {chat.sender}: {chat.message}
-            </li>
-          ))
-        }
-        </ul>
         <div className="w-full max-w-xl m-auto">
           {
             room && <AvatarCircle room={room} messages={messages} />
