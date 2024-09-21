@@ -6,7 +6,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { FirebaseError } from '@firebase/util'
 import RoomList from "@/components/RoomList";
 import { AvatarCircle } from "@/components/Avatars";
-import { ChatMessage, getCurrentUser, getMessageListener, getRoom, Room, sendMessage, UserData } from "@/lib/firebase/interface";
+import { ChatMessage, createInvitationCode, getCurrentUser, getMessageListener, getRoom, leaveRoom, Room, sendMessage, UserData } from "@/lib/firebase/interface";
 
 export default function ChatRoom({ params }: { params: { id: string } }) {
   const [currentUserData, setCurrentUserData] = useState<UserData | null>(null)
@@ -56,6 +56,47 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
     )
   }
 
+  const handleInvite = async (e: FormEvent) => {
+    e.preventDefault()
+    if (room == null) {
+      return
+    }
+    const code = await createInvitationCode(room,
+      () => {},
+      (e: unknown) => {
+        setShowAlert(true)
+        if (e instanceof FirebaseError) {
+          setAlertMessage(e.message)
+        }
+        setAlertClass("alert-error")
+      }
+    )
+    if (code == null) {
+      return
+    }
+    alert(`Created invitation code: ${code.code} (expires at ${code.expires.toDate().toLocaleString()})`)
+  }
+
+  const handleLeave = async (e: FormEvent) => {
+    e.preventDefault()
+    if (room == null || currentUserData == null) {
+      return
+    }
+    leaveRoom(room, currentUserData,
+      () => {
+        console.log("successfully left the room")
+        router.push("/")
+      },
+      (e: unknown) => {
+        setShowAlert(true)
+        if (e instanceof FirebaseError) {
+          setAlertMessage(e.message)
+        }
+        setAlertClass("alert-error")
+      }
+    )
+  }
+
   return (
     <div className="flex flex-row">
       <div className="">
@@ -63,6 +104,22 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
       </div>
       <main className="flex-1 flex flex-col gap-8 row-start-2 items-center overflow-hidden sm:items-start">
         <h1 className="text-7xl w-full my-3 text-center">Room {room?.name}</h1>
+        <div className="m-auto">
+        <button className="btn btn-primary" onClick={handleInvite}>Invite</button>
+        <button className="btn btn-error" onClick={()=>(document.getElementById('my_modal_1') as HTMLDialogElement)?.showModal()}>Leave</button>
+        <dialog id="my_modal_1" className="modal">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">Leave</h3>
+            <p className="py-4">Are you sure to leave from Room {room?.name}?</p>
+            <div className="modal-action">
+              <button className="btn btn-error" onClick={handleLeave}>leave</button>
+              <form method="dialog">
+                <button className="btn">Close</button>
+              </form>
+            </div>
+          </div>
+        </dialog>
+        </div>
         <div className="w-full max-w-xl m-auto">
           {
             room && <AvatarCircle room={room} messages={messages} currentUser={currentUserData} />

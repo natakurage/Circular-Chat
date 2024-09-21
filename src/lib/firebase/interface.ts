@@ -16,7 +16,8 @@ import {
   getDoc,
   doc,
   setDoc,
-  updateDoc
+  updateDoc,
+  Timestamp
 } from '@firebase/firestore'
 import { getDatabase, push, ref, onChildAdded } from '@firebase/database'
 import { FirebaseError } from "firebase/app"
@@ -38,6 +39,12 @@ export interface Room {
   id: string
   name: string,
   users: UserData[]
+}
+
+export interface InvitationCode {
+  code: string,
+  roomId: string,
+  expires: Timestamp
 }
 
 export const getCurrentUserRooms = async (currentUser: UserData) => {
@@ -272,6 +279,134 @@ export const updateUserInfo = async (
     const db = getFirestore()
     updateDoc(doc(db, "users", user.id), {
       displayName
+    })
+    onSuccess?.()
+  } catch (e) {
+    if (e instanceof FirebaseError) {
+      console.log(e)
+    }
+    onFail?.(e)
+  }
+}
+
+export const createInvitationCode = async (
+  room: Room,
+  onSuccess?: () => void,
+  onFail?: (e: unknown) => void
+) : Promise<InvitationCode | undefined> => {
+  const roomId = room.id
+  const expires = Timestamp.fromDate(new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000))
+  try {
+    const db = getFirestore()
+    const ref = await addDoc(collection(db, "invites"), {
+      roomId, expires
+    })
+    onSuccess?.()
+    return { code: ref.id, roomId, expires }
+  } catch (e) {
+    if (e instanceof FirebaseError) {
+      console.log(e)
+    }
+    onFail?.(e)
+  }
+}
+
+export const leaveRoom = async (
+  room: Room,
+  user: UserData,
+  onSuccess?: () => void,
+  onFail?: (e: unknown) => void
+) => {
+  const r = await getRoom(room.id)
+  if (r == null) {
+    onFail?.(0)
+    return
+  }
+  const users = r.users
+  const newUsers = users?.filter((u) => u.id != user.id)
+  try {
+    const db = getFirestore()
+    updateDoc(doc(db, "rooms", room.id), {
+      users: newUsers
+    })
+    onSuccess?.()
+  } catch (e) {
+    if (e instanceof FirebaseError) {
+      console.log(e)
+    }
+    onFail?.(e)
+  }
+}
+
+export const joinRoom = async (
+  code: string,
+  currentUser: UserData,
+  onSuccess?: () => void,
+  onFail?: (e: unknown) => void
+) => {
+  let roomId: string | null = null
+  try {
+    const db = getFirestore()
+    const document = await getDoc(doc(db, `invites/${code}`))
+    // 存在確認
+    if (!document.exists()) {
+      onFail?.(0)
+      return
+    }
+    const data = document.data()
+    // 日付確認
+    if (data?.expires > Timestamp.fromDate(new Date)) {
+      onFail?.(0)
+      return
+    }
+    roomId = data.roomId
+  } catch (e) {
+    if (e instanceof FirebaseError) {
+      console.error(e)
+    }
+    onFail?.(0)
+    return
+  }
+  if (roomId == null) {
+    onFail?.(0)
+    return
+  }
+  const room = await getRoom(roomId)
+  if (room == null) {
+    onFail?.(0)
+    return
+  }
+  const users = room.users
+  users.push(currentUser)
+  try {
+    const db = getFirestore()
+    updateDoc(doc(db, "rooms", room.id), {
+      users
+    })
+    onSuccess?.()
+  } catch (e) {
+    if (e instanceof FirebaseError) {
+      console.log(e)
+    }
+    onFail?.(e)
+  }
+}
+
+export const updateRoomInfo = async (
+  room: Room,
+  name: string,
+  onSuccess?: () => void,
+  onFail?: (e: unknown) => void
+) => {
+  const r = await getRoom(room.id)
+  if (r == null) {
+    onFail?.(0)
+    return
+  }
+  try {
+    const db = getFirestore()
+    updateDoc(doc(db, "rooms", room.id), {
+      name
     })
     onSuccess?.()
   } catch (e) {
