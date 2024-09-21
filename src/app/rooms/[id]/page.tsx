@@ -61,7 +61,7 @@ export default function ChatRoom({ params }: { params: { id: string } }) {
       <div className="">
         <RoomList currentUser={currentUserData}/>
       </div>
-      <main className="flex-1 flex flex-col gap-8 row-start-2 items-center sm:items-start">
+      <main className="flex-1 flex flex-col gap-8 row-start-2 items-center overflow-hidden sm:items-start">
         <h1 className="text-7xl w-full my-3 text-center">Room {room?.name}</h1>
         <div className="w-full max-w-xl m-auto">
           {
