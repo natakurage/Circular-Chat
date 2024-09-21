@@ -1,7 +1,9 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { createRoom, getCurrentUserRooms, Room, updateUserInfo, UserData } from "@/lib/firebase/interface";
+import { MenuIcon, X } from "lucide-react";
 
 export default function RoomList({ currentUser }: { currentUser: UserData | null }) {
+  const [isOpen, setIsOpen] = useState(true)
   const [rooms, setRooms] = useState<Room[]>([])
   const [roomName, setRoomName] = useState("")
   const [displayName, setDisplayName] = useState("")
@@ -44,49 +46,64 @@ export default function RoomList({ currentUser }: { currentUser: UserData | null
   }, [currentUser, fetchRooms])
 
   return (
-    <ul className="menu bg-base-200 rounded-box w-56 h-full">
-      <li className="menu-title">Chat Rooms</li>
-      {
-        rooms.map((room) => (
-          <li key={room.id}>
-            <a href={`/rooms/${room.id}`}>{room.name}</a>
-          </li>
-        ))
-      }
-      <li className="dropdown">
-        <div tabIndex={0}>+ Open Room</div>
-        <form
-          onSubmit={handleCreateRoom}
-          className="dropdown-content bg-base-100 w-full p-0 z-[1] shadow"
+    <ul className={"menu bg-base-200 rounded-box h-full " + (isOpen ? "w-56 " : "")}>
+      <li className="text-white">
+        <button
+          className="btn justify-start"
+          onClick={() => setIsOpen(!isOpen)}
         >
-          <input
-            type="text"
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
-            tabIndex={0}
-            placeholder="Enter Room Name"
-            className="block bg-base-100 z-[1] w-full h-full shadow p-0"
-          />
-          <button className="btn-neutral btn btn-block">+</button>
-        </form>
+          {
+            isOpen ? 
+              <X/> : <MenuIcon />
+          }
+        </button>
       </li>
-      <li className="menu-title">Change Name</li>
-      <li>
-        <form
-            onSubmit={handleNameUpdate}
-            className="dropdown-content bg-base-100 w-full p-0 z-[1] shadow"
-          >
-          <input
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            tabIndex={0}
-            placeholder="Enter Your Name"
-            className="block bg-base-100 z-[1] w-full h-full shadow p-0"
-          />
-          <button className="btn-neutral btn btn-block">+</button>
-        </form>
-      </li>
+      {
+        isOpen && <>
+          <li className="menu-title">Chat Rooms</li>
+          {
+            rooms.map((room) => (
+              <li key={room.id}>
+                <a href={`/rooms/${room.id}`}>{room.name}</a>
+              </li>
+            ))
+          }
+          <li className="dropdown">
+            <div tabIndex={0}>+ Open Room</div>
+            <form
+              onSubmit={handleCreateRoom}
+              className="dropdown-content bg-base-100 w-full p-0 z-[1] shadow"
+            >
+              <input
+                type="text"
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+                tabIndex={0}
+                placeholder="Enter Room Name"
+                className="block bg-base-100 z-[1] w-full h-full shadow p-0"
+              />
+              <button className="btn-neutral btn btn-block">+</button>
+            </form>
+          </li>
+          <li className="menu-title">Change Name</li>
+          <li>
+            <form
+                onSubmit={handleNameUpdate}
+                className="dropdown-content bg-base-100 w-full p-0 z-[1] shadow"
+              >
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                tabIndex={0}
+                placeholder="Enter Your Name"
+                className="block bg-base-100 z-[1] w-full h-full shadow p-0"
+              />
+              <button className="btn-neutral btn btn-block">+</button>
+            </form>
+          </li>
+        </>
+      }
   </ul>
 )
 
