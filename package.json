@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "lucide-react": "^0.445.0",
-    "next": "14.2.13",
+    "next": "16.4.3",
     "react": "^18",
     "react-dom": "^18"
   },
@@ -21,9 +21,9 @@
     "daisyui": "^4.12.10",
     "eslint": "^8",
     "eslint-config-next": "14.2.13",
-    "firebase": "^10.13.2",
+    "firebase": "^13.1.0",
     "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5"
   }
 }
